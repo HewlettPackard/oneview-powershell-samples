@@ -1,4 +1,3 @@
-C:\Users\clynch\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
 ##############################################################################
 # Server_Profile_Template_Multiconnection_Sample.ps1
 #
@@ -19,7 +18,7 @@ C:\Users\clynch\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1
 #
 #   VERSION 4.0
 #
-# (C) Copyright 2013-2018 Hewlett Packard Enterprise Development LP 
+# (C) Copyright 2013-2019 Hewlett Packard Enterprise Development LP 
 ##############################################################################
 <#
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,19 +40,19 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 #>
 ##############################################################################
-
-if (-not (get-module HPOneview.400)) 
+$ApplianceHostname = "appliance.lab.local"
+if (-not (Get-Module HPOneview.420)) 
 {
 
-    lsvn400
+    Import-Module HPOneView.420
 
 }
 
-if (-not ($ConnectedSessions | ? Name -eq "hpov7.doctors-lab.local"))
+if (-not ($ConnectedSessions | % Name -eq $ApplianceHostname))
 {
 
     Write-Host "Connecting to appliance."
-    $MyConnection = Connect-HPOVMgmt -Hostname hpov7.doctors-lab.local -Credential $HPOVPSCredential
+    $MyConnection = Connect-HPOVMgmt -Hostname $ApplianceHostname -Credential $HPOVPSCredential
 
 }
 
