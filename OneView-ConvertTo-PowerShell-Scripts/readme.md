@@ -24,5 +24,5 @@ The sequence used to replicate the environment is as follow:
    * Generate scripts for server profile templates
    * Generate scripts for server profiles
 
-   ** Note: Use the help of ConvertTo-HPOVPOwerShellScript to generate scripts for addtional configurations
+   ** Note: Use the help of ConvertTo-HPOVPOwerShellScript to generate scripts for additional configurations
     
