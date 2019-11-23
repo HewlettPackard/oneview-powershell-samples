@@ -8,6 +8,8 @@ Administrators want to 'replicate' an existing Synergy environment managed by an
 ## Prerequisites
 The script requires:
    * the latest OneView PowerShell library : https://github.com/HewlettPackard/POSH-HPOneView/releases
+        to install on a Windows environment:
+         - install-module HPOneView.420 
    * IP address and credentials to connect to an existing OneView environment ( called 'master')
    * IP address and credentials to connect to a new OneView environment
 
@@ -22,15 +24,5 @@ The sequence used to replicate the environment is as follow:
    * Generate scripts for server profile templates
    * Generate scripts for server profiles
 
-   ** Note: Use the help of ConvertTo-HPOVPOwerShellScript to generate scripts for addtional configurations: SAN, Appliance settings ...
-
-
-## Syntax
-
-```
-   $cred    = get-credential   # Provide credential to connect to OneView
-    .\get-LLDP.ps1  -OVlistCSV  <OVappliances.txt> -OVcredential $cred 
-
-```
-
+   ** Note: Use the help of ConvertTo-HPOVPOwerShellScript to generate scripts for addtional configurations
     
