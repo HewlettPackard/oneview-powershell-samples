@@ -1,9 +1,8 @@
 
 
-
-### Connect to DR OneView
+### Connect to OneView
 $cred = get-credential -UserName administrator -message "Provide password"
-Connect-HPOVMgmt -hostname  10.62.128.52 -credential $cred
+Connect-HPOVMgmt -hostname  '<OV-IP-here>' -credential $cred
 
 $data       = @()
 $CR         = "`n"
