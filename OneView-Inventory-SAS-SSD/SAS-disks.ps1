@@ -6,7 +6,7 @@ Connect-HPOVMgmt -hostname  '<OV-IP-here>' -credential $cred
 
 $data       = @()
 $CR         = "`n"
-$data       = "Server,Model,SerialNumber" + $CR
+$data       = "Server,Interface,Model,SerialNumber" + $CR
 
 ### Get Server
 $Server_list = Get-HPOVServer
@@ -19,13 +19,14 @@ foreach ($s in $Server_List)
 
     foreach ($pd in $lStorage.data.PhysicalDrives)
     {
-        if (($pd.InterfaceType -eq 'SATA') -and ($pd.MediaType -eq 'SSD'))
+        if (($pd.InterfaceType -eq 'SAS') -and ($pd.MediaType -eq 'SSD'))
         {
-            $sn     = $pd.serialNumber
-            $model  = $pd.Model
+            $sn         = $pd.serialNumber
+            $interface  = $pd.InterfaceType
+            $model      = $pd.Model
             if ($sn)
             {
-                $data   += "$name,$model,$sn" + $CR
+                $data   += "$name,$interface,$model,$sn" + $CR
             }
         }
     }
