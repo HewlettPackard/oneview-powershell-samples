@@ -6,7 +6,7 @@ Connect-HPOVMgmt -hostname  '<OV-IP-here>' -credential $cred
 
 $data       = @()
 $CR         = "`n"
-$data       = "Server,Interface,Model,SerialNumber" + $CR
+$data       = "Server,Interface,Model,SerialNumber,firmware" + $CR
 
 ### Get Server
 $Server_list = Get-HPOVServer
@@ -24,9 +24,10 @@ foreach ($s in $Server_List)
             $sn         = $pd.serialNumber
             $interface  = $pd.InterfaceType
             $model      = $pd.Model
+            $fw         = $pd.firmwareversion.current.versionstring
             if ($sn)
             {
-                $data   += "$name,$interface,$model,$sn" + $CR
+                $data   += "$name,$interface,$model,$sn,$fw" + $CR
             }
         }
     }
