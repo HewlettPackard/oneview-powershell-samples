@@ -57,7 +57,7 @@ iloName,userName,password
     .\iLO-Get-Disks.ps1 -CSVfile ilo.csv
 
     # Get inventory for SATA-SSD disks 
-    .\iLO-Get-Disks.ps1 .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SATA -mediaType SSD
+    .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SATA -mediaType SSD
 
 ```
     
