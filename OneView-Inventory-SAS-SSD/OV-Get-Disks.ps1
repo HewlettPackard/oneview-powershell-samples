@@ -74,8 +74,8 @@ Function Gen10-get-disk (
 }
 
 
-# ------ Gen 8/9 Inventory
-Function Gen89-get-disk (
+# ------  Inventory thru iLO ( Gen8-9-10)
+Function Get-disk-from-iLO (
     [string]$serverName,
     [string]$interfaceType, 
     [string]$mediaType,
@@ -101,13 +101,30 @@ Function Gen89-get-disk (
                 $pd             = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
                 if (($pd.InterfaceType -eq $interfaceType) -and ($pd.MediaType -eq $mediaType))
                 {
-                    $sn         = $pd.serialNumber
-                    $interface  = $pd.InterfaceType
-                    $model      = $pd.Model
-                    $fw         = $pd.firmwareversion.current.versionstring
+                    $sn              = $pd.serialNumber
+                    $interface       = $pd.InterfaceType
+                    $model           = $pd.Model
+                    $fw              = $pd.firmwareversion.current.versionstring
+                    $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
+                    $ph              = $pd.PowerOnHours
                     if ($sn)
                     {
-                        $data   += "$serverName,$interface,$model,$sn,$fw" + $CR
+                        $years = $months = $days = 0
+                        if ($ph)
+                        {
+                            # Calculate poweronHours
+                            $tp         = new-timespan -hours $ph 
+                            $days       = [int]($tp.days)
+                            $hours      = [int]($tp.hours)
+                            $years      = [math]::floor($days / 365)  
+                            $m          = $days % 365
+                            $months     = [math]::floor($m / 30)
+                            $days       = $m % 30
+
+                        }
+                        $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+
+                        $data   += "$serverName,$interface,$model,$sn,$fw,$ssdPercentUsage%,$powerOnHours" + $CR
                    
                     }
                 }
@@ -126,7 +143,7 @@ $date           = (get-date).toString('MM_dd_yyyy')
 $diskInventory  = @()
 $d3940Inventory = @()
 
-$diskInventory  = "Server,Interface,Model,SerialNumber,firmware" + $CR
+$diskInventory  = "Server,Interface,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours" + $CR
 $d3940Inventory = "diskLocation,,Interface,Model,SerialNumber,firmware" + $CR
 
 
@@ -182,21 +199,11 @@ foreach ($s in $Server_List)
     }
 
     write-host "---- Collecting disk of type $interfaceType-$mediaType on server ---> $sName"
+    $iloSession = $s | get-HPOVilosso -iLORestSession
+    $ilosession.rootUri = $ilosession.rootUri -replace 'rest','redfish'
 
-    $sModel     = $s.shortModel
-    if ($sModel -like '*Gen10*')
-    {
-        $data = Gen10-get-disk -server $s -serverName $sName  -interfaceType $interfaceType -mediaType $mediaType
+    $data = Get-disk-from-iLO -serverName $sName -iloSession $iloSession -interfaceType $interfaceType -mediaType $mediaType   
 
-    }
-    else # Gen8 or Gen9
-    {
-        $iloSession = $s | get-HPOVilosso -iLORestSession
-        $ilosession.rootUri = $ilosession.rootUri -replace 'rest','redfish'
-
-        $data = Gen89-get-disk -serverName $sName -iloSession $iloSession -interfaceType $interfaceType -mediaType $mediaType   
-
-    }
     if ($data)
     {
         $data           = $data | % {$_.TrimStart()}

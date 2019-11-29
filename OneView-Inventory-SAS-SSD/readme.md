@@ -9,6 +9,7 @@ Administrators want to get an inventory of SAS SSD drives in response to the cri
    * Works for both OneView and non-OneView environment(using iLO)
    * Works for Gen8/Gen9 and Gen10 servers - BL and DL
    * Works for D3940 if using OneView
+   * Also collect PowerOnHours and SSDUtilization
 
 
 
