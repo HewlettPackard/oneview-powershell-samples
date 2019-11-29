@@ -9,6 +9,37 @@ Param (
         [string]$mediaType                 = 'SSD'
       )
 
+# ---- D3940 Inventory
+Function D3940-get-disk(
+    $DriveEnclosure,
+    [string]$interfaceType, 
+    [string]$mediaType
+
+)
+{
+    $data   = @()
+
+    $driveBays      = $driveEnclosure.driveBays
+    foreach ($pd in $driveBays.drive)
+    {
+        if (($pd.deviceInterface -eq $interfaceType) -and ($pd.driveMedia -eq $mediaType))  
+        {
+            $interface      = $pd.deviceInterface
+            $name           = $pd.Name
+            $sn             = $pd.serialNumber
+            $model          = $pd.model
+            $fw             = $pd.firmwareVersion
+            if ($sn)
+            {
+                $data      += "$name,$interface,$model,$sn,$fw" + $CR
+            }
+
+        }      
+    }
+
+    return $data
+
+}
 
 # ---- Gen10 inventory 
 Function Gen10-get-disk (
@@ -91,11 +122,12 @@ Function Gen89-get-disk (
 $CR             = "`n"
 $COMMA          = ","
 
-$diskInventory  = @()
-$diskInventory  = "Server,Interface,Model,SerialNumber,firmware" + $CR
-
 $date           = (get-date).toString('MM_dd_yyyy') 
-$outFile        = $connectionName + "_" + $date + "_disk_Inventory.csv"
+$diskInventory  = @()
+$d3940Inventory = @()
+
+$diskInventory  = "Server,Interface,Model,SerialNumber,firmware" + $CR
+$d3940Inventory = "diskLocation,,Interface,Model,SerialNumber,firmware" + $CR
 
 
 ### Connect to OneView
@@ -103,11 +135,40 @@ $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
 $cred           = New-Object System.Management.Automation.PSCredential  -ArgumentList $userName, $securePassword
 
 
-write-host -ForegroundColor Cyan "----- Connecting to OneView --> $hostName"
+write-host -ForegroundColor Cyan "---- Connecting to OneView --> $hostName"
 $connection     = Connect-HPOVMgmt -Hostname $hostName -loginAcknowledge:$true -AuthLoginDomain $authLoginDomain -Credential $cred
 $connectionName = $connection.Name 
 
 
+
+$outFile        = $connectionName + "_" + $date + "_disk_Inventory.csv"
+$d3940outFile   = "d3940_" + $date + "_disk_Inventory.csv"
+
+
+
+## Get D3940
+$d3940_list   = Get-HPOVDriveEnclosure
+if ($d3940_list) 
+{
+    foreach ($d3940 in $d3940_list)
+    {
+        $driveEnclosureName     = $d3940.Name
+        write-host "---- Collecting disk of type $interfaceType-$mediaType on d3940  --> $driveEnclosureName "
+        $data            = D3940-get-disk -DriveEnclosure $d3940  -interfaceType $interfaceType -mediaType $mediaType
+        if ($data)
+        {
+            $data             = $data | % {$_.TrimStart()}
+            $d3940Inventory  += $data 
+        }
+
+    }
+    $d3940Inventory  | Out-File $d3940outFile 
+    write-host -foreground CYAN "Disk Inventory on d3940 complete --> file: $d3940outFile $CR"
+}
+else 
+{
+    write-host -foreground Yellow " No D3940 found. Skip inventory ......$CR"    
+}
 
 ### Get Server
 $Server_list = Get-HPOVServer
@@ -126,10 +187,7 @@ foreach ($s in $Server_List)
     if ($sModel -like '*Gen10*')
     {
         $data = Gen10-get-disk -server $s -serverName $sName  -interfaceType $interfaceType -mediaType $mediaType
-        if ($data)
-        {
-            $diskInventory += $data
-        }
+
     }
     else # Gen8 or Gen9
     {
@@ -137,16 +195,20 @@ foreach ($s in $Server_List)
         $ilosession.rootUri = $ilosession.rootUri -replace 'rest','redfish'
 
         $data = Gen89-get-disk -serverName $sName -iloSession $iloSession -interfaceType $interfaceType -mediaType $mediaType   
-        if ($data)
-        {
-            $diskInventory += $data
-        }
-    }
 
+    }
+    if ($data)
+    {
+        $data           = $data | % {$_.TrimStart()}
+        $diskInventory += $data
+    }
 }
 
 $diskInventory | Out-File $outFile
 
-write-host -foreground CYAN "Inventory complete --> file: $outFile "
+write-host -foreground CYAN "Disk Inventory on server complete --> file: $outFile $CR"
+
+
+
 
 Disconnect-HPOVMgmt

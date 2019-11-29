@@ -4,9 +4,12 @@
 ## Scenario
 Administrators want to get an inventory of SAS SSD drives in response to the critical advisory for upgrading firmware on those drives: https://support.hpe.com/hpsc/doc/public/display?docId=emr_na-a00092491en_us 
 
+
 ## Notes
    * Works for both OneView and non-OneView environment(using iLO)
    * Works for Gen8/Gen9 and Gen10 servers - BL and DL
+   * Works for D3940 if using OneView
+
 
 
 ## Prerequisites
