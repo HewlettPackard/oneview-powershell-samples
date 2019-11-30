@@ -122,17 +122,19 @@ Function Get-disk-from-iLO (
                             $days       = $m % 30
 
                         }
+
                         $powerOnHours   = "$years years-$months months-$days days-$hours hours"
 
                         $data   += "$serverName,$interface,$model,$sn,$fw,$ssdPercentUsage%,$powerOnHours" + $CR
                    
                     }
+
                 }
             }
 
         }
     }
-
+    $data       = $data | % {$_.TrimStart()}
     return $data
 }
 
@@ -159,32 +161,39 @@ $connectionName = $connection.Name
 
 
 $outFile        = $connectionName + "_" + $date + "_disk_Inventory.csv"
-$d3940outFile   = "d3940_" + $date + "_disk_Inventory.csv"
+$d3940outFile   = $connectionName + "_" + "d3940_" + $date + "_disk_Inventory.csv"
 
 
 
 ## Get D3940
-$d3940_list   = Get-HPOVDriveEnclosure
-if ($d3940_list) 
+if ($connection.ApplianceType -eq 'Çomposer')
 {
-    foreach ($d3940 in $d3940_list)
+    $d3940_list   = Get-HPOVDriveEnclosure
+    if ($d3940_list) 
     {
-        $driveEnclosureName     = $d3940.Name
-        write-host "---- Collecting disk of type $interfaceType-$mediaType on d3940  --> $driveEnclosureName "
-        $data            = D3940-get-disk -DriveEnclosure $d3940  -interfaceType $interfaceType -mediaType $mediaType
-        if ($data)
+        foreach ($d3940 in $d3940_list)
         {
-            $data             = $data | % {$_.TrimStart()}
-            $d3940Inventory  += $data 
-        }
+            $driveEnclosureName     = $d3940.Name
+            write-host "---- Collecting disk of type $interfaceType-$mediaType on d3940  --> $driveEnclosureName "
+            $data            = D3940-get-disk -DriveEnclosure $d3940  -interfaceType $interfaceType -mediaType $mediaType
+            if ($data)
+            {
+                $data             = $data | % {$_.TrimStart()}
+                $d3940Inventory  += $data 
+            }
 
+        }
+        $d3940Inventory  | Out-File $d3940outFile 
+        write-host -foreground CYAN "Disk Inventory on d3940 complete --> file: $d3940outFile $CR"
     }
-    $d3940Inventory  | Out-File $d3940outFile 
-    write-host -foreground CYAN "Disk Inventory on d3940 complete --> file: $d3940outFile $CR"
+    else 
+    {
+        write-host -foreground Yellow " No D3940 found. Skip inventory ......$CR"    
+    }
 }
 else 
 {
-    write-host -foreground Yellow " No D3940 found. Skip inventory ......$CR"    
+    write-host -foreground Yellow " The appliance is not a Synergy Composer. Skip D3940 inventory ......$CR" 
 }
 
 ### Get Server
@@ -192,6 +201,7 @@ $Server_list = Get-HPOVServer
 
 foreach ($s in $Server_List)
 {
+    $data           = @()
     $sName          = $s.Name 
     if ($sName -like  "*$COMMA*")
     {
@@ -208,6 +218,10 @@ foreach ($s in $Server_List)
     {
         $data           = $data | % {$_.TrimStart()}
         $diskInventory += $data
+    }
+    else
+    {
+        write-host -foreground Yellow "      ------ No $interfaceType/$mediaType disk found on $sName...."
     }
 }
 

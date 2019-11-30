@@ -106,6 +106,7 @@ Function Get-disk-from-iLO (
                         $data   += "$serverName,$iloName,$interface,$model,$sn,$fw,$ssdPercentUsage%,$powerOnHours" + $CR
                    
                     }
+
                 }
             }
 
@@ -134,7 +135,8 @@ if (test-path $CSVfile)
     $CSV        = import-csv $CSVFile
     foreach ($ilo in $CSV)
     {
-        $iloName        = $ilo.iloName
+        $data               = ""
+        $iloName            = $ilo.iloName
         if ( ($iloName) -or ($iloName -notlike '#*')) 
         {
             $username       = $ilo.userName
@@ -157,6 +159,10 @@ if (test-path $CSVfile)
             if ($data)
             {
                 $diskInventory += $data
+            }
+            else
+            {
+                write-host -foreground Yellow "      ------ No $interfaceType/$mediaType disk found on $iloName ...."
             }
         }
 
