@@ -1,4 +1,4 @@
-# OneView Inventory of SAS SSD PowerShell script
+# Inventory of local disks ( SAS-SATA / SDD-HDD) PowerShell script
 
 
 ## Scenario
