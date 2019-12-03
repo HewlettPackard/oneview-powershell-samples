@@ -2,8 +2,8 @@
 Param (                    
         [string]$CSVfile,
 
-        [string]$interfaceType             = 'SAS',
-        [string]$mediaType                 = 'SSD'
+        [string]$interfaceType             = 'All',
+        [string]$mediaType                 = 'All'
       )
 
 
@@ -33,15 +33,41 @@ Function Get-disk (
             foreach ($diskOdataid in $diskDrives.Members.'@odata.id')
             {
                 $pd             = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
-                if (($pd.InterfaceType -eq $interfaceType) -and ($pd.MediaType -eq $mediaType))
+                $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.InterfaceType -eq $interfaceType}  else {$true}
+                $mediaFilter         = if ($mediaType -ne 'All')        {$pd.mediaType -eq $mediaType}          else {$true}
+
+                if ($interfaceFilter -and $mediaFilter )
                 {
                     $sn         = $pd.serialNumber
                     $interface  = $pd.InterfaceType
                     $model      = $pd.Model
                     $fw         = $pd.firmwareversion.current.versionstring
+                    $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
+                    $ph              = $pd.PowerOnHours
                     if ($sn)
                     {
-                        $data   += "$serverName,$iloName,$interface,$model,$sn,$fw" + $CR
+                        $powerOnHours   = $ssdUsage = ""
+                        if ($media -eq 'SSD') 
+                        {
+                            $years = $months = $days = 0
+                            if ($ph)
+                            {
+                                # Calculate poweronHours
+                                $tp         = new-timespan -hours $ph 
+                                $days       = [int]($tp.days)
+                                $hours      = [int]($tp.hours)
+                                $years      = [math]::floor($days / 365)  
+                                $m          = $days % 365
+                                $months     = [math]::floor($m / 30)
+                                $days       = $m % 30
+
+                            }
+
+                            $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                            $ssdUsage       = "$ssdPercentUsage%"
+                        }
+
+                        $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
                    
                     }
                 }
@@ -78,7 +104,11 @@ Function Get-disk-from-iLO (
             foreach ($diskOdataid in $diskDrives.Members.'@odata.id')
             {
                 $pd             = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
-                if (($pd.InterfaceType -eq $interfaceType) -and ($pd.MediaType -eq $mediaType))
+
+                $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.InterfaceType -eq $interfaceType}  else {$true}
+                $mediaFilter         = if ($mediaType -ne 'All')        {$pd.mediaType -eq $mediaType}          else {$true}
+
+                if ($interfaceFilter -and $mediaFilter )
                 {
                     $sn              = $pd.serialNumber
                     $interface       = $pd.InterfaceType
@@ -88,22 +118,28 @@ Function Get-disk-from-iLO (
                     $ph              = $pd.PowerOnHours
                     if ($sn)
                     {
-                        $years = $months = $days = 0
-                        if ($ph)
+                        $powerOnHours   = $ssdUsage = ""
+                        if ($media -eq 'SSD') 
                         {
-                            # Calculate poweronHours
-                            $tp         = new-timespan -hours $ph 
-                            $days       = [int]($tp.days)
-                            $hours      = [int]($tp.hours)
-                            $years      = [math]::floor($days / 365)  
-                            $m          = $days % 365
-                            $months     = [math]::floor($m / 30)
-                            $days       = $m % 30
+                            $years = $months = $days = 0
+                            if ($ph)
+                            {
+                                # Calculate poweronHours
+                                $tp         = new-timespan -hours $ph 
+                                $days       = [int]($tp.days)
+                                $hours      = [int]($tp.hours)
+                                $years      = [math]::floor($days / 365)  
+                                $m          = $days % 365
+                                $months     = [math]::floor($m / 30)
+                                $days       = $m % 30
 
+                            }
+
+                            $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                            $ssdUsage       = "$ssdPercentUsage%"
                         }
-                        $powerOnHours   = "$years years-$months months-$days days-$hours hours"
 
-                        $data   += "$serverName,$iloName,$interface,$model,$sn,$fw,$ssdPercentUsage%,$powerOnHours" + $CR
+                        $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
                    
                     }
 
@@ -121,13 +157,17 @@ Function Get-disk-from-iLO (
 $CR             = "`n"
 $COMMA          = ","
 
-$diskInventory  = @()
-$diskInventory  = "Server,iloName,Interface,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours" + $CR
+
+$diskInventory  = @("Server,iloName,Interface,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
 
 
 $date           = (get-date).toString('MM_dd_yyyy') 
 $outFile        = "iLO_" + $date + "_disk_Inventory.csv"
 
+## Set Message
+$diskMessage    = ""
+$diskMessage    = if ($interfaceType -ne 'All') { $interfaceType }     else {'SAS or SATA '}
+$diskMessage   += if ($mediaType -ne 'All')     { "/ $mediaType "}     else {'/ SSD or HDD '}
 
 ### Access CSV
 if (test-path $CSVfile)
@@ -154,7 +194,7 @@ if (test-path $CSVfile)
                 $computerSystem = Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid $sysOdataid
                 $sName          = $computerSystem.HostName
             }
-            write-host "---- Collecting disk of type $interfaceType-$mediaType on server ---> $sName"
+            write-host "---- Collecting disks information on server ---> $sName"
             $data = Get-disk-from-iLO -serverName $sName -iloSession $iloSession -iloName $iloName -interfaceType $interfaceType -mediaType $mediaType   
             if ($data)
             {
@@ -162,7 +202,7 @@ if (test-path $CSVfile)
             }
             else
             {
-                write-host -foreground Yellow "      ------ No $interfaceType/$mediaType disk found on $iloName ...."
+                write-host -foreground Yellow "      ------ No $diskMessage disk found on $iloName ...."
             }
         }
 

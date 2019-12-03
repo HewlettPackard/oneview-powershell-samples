@@ -38,9 +38,12 @@ The script requires:
 ## To run in an OneView environment
 
 ```
-    # Get inventory for SAS-SSD disks ( default)
+    # Get inventory for all disks ( default)
     .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password>
 
+    # Get inventory for SAS-SSD disks 
+    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SAS -mediaType SSD
+    
     # Get inventory for SATA-SSD disks 
     .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SATA -mediaType SSD
 
@@ -57,8 +60,11 @@ iloName,userName,password
 ```
 
 ```
-    # Get inventory for SAS-SSD disks ( default)
+    # Get inventory for All disks ( default)
     .\iLO-Get-Disks.ps1 -CSVfile ilo.csv
+
+    # Get inventory for SAS-SSD disks 
+    .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SAS -mediaType SSD
 
     # Get inventory for SATA-SSD disks 
     .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SATA -mediaType SSD

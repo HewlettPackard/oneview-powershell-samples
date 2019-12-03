@@ -5,9 +5,13 @@ Param (
         [string]$password                  = "",
         [string]$authLoginDomain           = "local",
 
-        [string]$interfaceType             = 'SAS',
-        [string]$mediaType                 = 'SSD'
+        [string]$interfaceType             = 'All',
+        [string]$mediaType                 = 'All'
       )
+
+
+$CR             = "`n"
+$COMMA          = ","
 
 # ---- D3940 Inventory
 Function D3940-get-disk(
@@ -22,16 +26,19 @@ Function D3940-get-disk(
     $driveBays      = $driveEnclosure.driveBays
     foreach ($pd in $driveBays.drive)
     {
-        if (($pd.deviceInterface -eq $interfaceType) -and ($pd.driveMedia -eq $mediaType))  
+        $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.deviceInterface -eq $interfaceType}  else {$true}
+        $mediaFilter         = if ($mediaType -ne 'All')        {$pd.driveMedia -eq $mediaType}          else {$true}
+        if ($interfaceFilter -and $mediaFilter )
         {
             $interface      = $pd.deviceInterface
+            $media          = $pd.driveMedia
             $name           = $pd.Name
             $sn             = $pd.serialNumber
             $model          = $pd.model
             $fw             = $pd.firmwareVersion
             if ($sn)
             {
-                $data      += "$name,$interface,$model,$sn,$fw" + $CR
+                $data      += "$name,$interface,$media,$model,$sn,$fw"
             }
 
         }      
@@ -65,7 +72,7 @@ Function Gen10-get-disk (
             $fw         = $pd.firmwareversion.current.versionstring
             if ($sn)
             {
-                $data   += "$name,$interface,$model,$sn,$fw" + $CR
+                $data   += "$name,$interface,$model,$sn,$fw" 
             }
         }
     }
@@ -98,34 +105,43 @@ Function Get-disk-from-iLO (
             $diskDrives         = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $ddOdataid
             foreach ($diskOdataid in $diskDrives.Members.'@odata.id')
             {
-                $pd             = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
-                if (($pd.InterfaceType -eq $interfaceType) -and ($pd.MediaType -eq $mediaType))
+                $pd                  = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
+                $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.InterfaceType -eq $interfaceType}  else {$true}
+                $mediaFilter         = if ($mediaType -ne 'All')        {$pd.mediaType -eq $mediaType}          else {$true}
+
+                if ($interfaceFilter -and $mediaFilter )
                 {
                     $sn              = $pd.serialNumber
                     $interface       = $pd.InterfaceType
+                    $media           = $pd.mediaType
                     $model           = $pd.Model
                     $fw              = $pd.firmwareversion.current.versionstring
                     $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
                     $ph              = $pd.PowerOnHours
                     if ($sn)
                     {
-                        $years = $months = $days = 0
-                        if ($ph)
+                        $powerOnHours   = $ssdUsage = ""
+                        if ($media -eq 'SSD') 
                         {
-                            # Calculate poweronHours
-                            $tp         = new-timespan -hours $ph 
-                            $days       = [int]($tp.days)
-                            $hours      = [int]($tp.hours)
-                            $years      = [math]::floor($days / 365)  
-                            $m          = $days % 365
-                            $months     = [math]::floor($m / 30)
-                            $days       = $m % 30
+                            $years = $months = $days = 0
+                            if ($ph)
+                            {
+                                # Calculate poweronHours
+                                $tp         = new-timespan -hours $ph 
+                                $days       = [int]($tp.days)
+                                $hours      = [int]($tp.hours)
+                                $years      = [math]::floor($days / 365)  
+                                $m          = $days % 365
+                                $months     = [math]::floor($m / 30)
+                                $days       = $m % 30
 
+                            }
+
+                            $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                            $ssdUsage       = "$ssdPercentUsage%"
                         }
 
-                        $powerOnHours   = "$years years-$months months-$days days-$hours hours"
-
-                        $data   += "$serverName,$interface,$model,$sn,$fw,$ssdPercentUsage%,$powerOnHours" + $CR
+                        $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
                    
                     }
 
@@ -134,19 +150,16 @@ Function Get-disk-from-iLO (
 
         }
     }
-    $data       = $data | % {$_.TrimStart()}
     return $data
 }
 
-$CR             = "`n"
-$COMMA          = ","
+
 
 $date           = (get-date).toString('MM_dd_yyyy') 
-$diskInventory  = @()
-$d3940Inventory = @()
 
-$diskInventory  = "Server,Interface,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours" + $CR
-$d3940Inventory = "diskLocation,,Interface,Model,SerialNumber,firmware" + $CR
+
+$diskInventory  = @("Server,Interface,MediaType,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
+$d3940Inventory = @("diskLocation,Interface,MediaType,Model,SerialNumber,firmware")
 
 
 ### Connect to OneView
@@ -166,7 +179,8 @@ $d3940outFile   = $connectionName + "_" + "d3940_" + $date + "_disk_Inventory.cs
 
 
 ## Get D3940
-if ($connection.ApplianceType -eq 'Çomposer')
+
+if ($connection.ApplianceType -eq 'Composer')
 {
     $d3940_list   = Get-HPOVDriveEnclosure
     if ($d3940_list) 
@@ -174,11 +188,10 @@ if ($connection.ApplianceType -eq 'Çomposer')
         foreach ($d3940 in $d3940_list)
         {
             $driveEnclosureName     = $d3940.Name
-            write-host "---- Collecting disk of type $interfaceType-$mediaType on d3940  --> $driveEnclosureName "
+            write-host "---- Collecting disks information on d3940  --> $driveEnclosureName "
             $data            = D3940-get-disk -DriveEnclosure $d3940  -interfaceType $interfaceType -mediaType $mediaType
             if ($data)
             {
-                $data             = $data | % {$_.TrimStart()}
                 $d3940Inventory  += $data 
             }
 
@@ -196,6 +209,11 @@ else
     write-host -foreground Yellow " The appliance is not a Synergy Composer. Skip D3940 inventory ......$CR" 
 }
 
+## Set Message
+$diskMessage    = ""
+$diskMessage    = if ($interfaceType -ne 'All') { $interfaceType }     else {'SAS or SATA '}
+$diskMessage   += if ($mediaType -ne 'All')     { "/ $mediaType "}     else {'/ SSD or HDD '}
+
 ### Get Server
 $Server_list = Get-HPOVServer
 
@@ -203,12 +221,14 @@ foreach ($s in $Server_List)
 {
     $data           = @()
     $sName          = $s.Name 
+    $sName_noquote  = $sName
+
     if ($sName -like  "*$COMMA*")
     {
         $sName      = "`"" + $sName + "`"" 
     }
 
-    write-host "---- Collecting disk of type $interfaceType-$mediaType on server ---> $sName"
+    write-host "---- Collecting disks information on server ---> $sName_noquote"
     $iloSession = $s | get-HPOVilosso -iLORestSession
     $ilosession.rootUri = $ilosession.rootUri -replace 'rest','redfish'
 
@@ -216,12 +236,12 @@ foreach ($s in $Server_List)
 
     if ($data)
     {
-        $data           = $data | % {$_.TrimStart()}
+
         $diskInventory += $data
     }
     else
     {
-        write-host -foreground Yellow "      ------ No $interfaceType/$mediaType disk found on $sName...."
+        write-host -foreground Yellow "      ------ No $diskMessage disk found on $sName...."
     }
 }
 
