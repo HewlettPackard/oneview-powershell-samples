@@ -163,6 +163,7 @@ $diskInventory  = @("Server,iloName,Interface,Model,SerialNumber,firmware,ssdEnd
 
 $date           = (get-date).toString('MM_dd_yyyy') 
 $outFile        = "iLO_" + $date + "_disk_Inventory.csv"
+$errorFile      = "iLO_" + $date + "_errors.txt"
 
 ## Set Message
 $diskMessage    = ""
@@ -183,26 +184,36 @@ if (test-path $CSVfile)
             $securePassword = $ilo.password | ConvertTo-SecureString -AsPlainText -Force
             $cred           = New-Object System.Management.Automation.PSCredential  -ArgumentList $userName, $securePassword
 
+            try 
+            {
+                ## Connect to iLO
+                $iloSession     = Connect-HPERedfish -Address $iloName -Cred $cred -DisableCertificateAuthentication
 
-            ## Connect to iLO
-            $iloSession     = Connect-HPERedfish -Address $iloName -Cred $cred -DisableCertificateAuthentication
-
-            ## Get server name
-            $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
-            foreach ($sysOdataid in $systems.Members.'@odata.id' )
-            {
-                $computerSystem = Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid $sysOdataid
-                $sName          = $computerSystem.HostName
+                ## Get server name
+                $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
+                foreach ($sysOdataid in $systems.Members.'@odata.id' )
+                {
+                    $computerSystem = Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid $sysOdataid
+                    $sName          = $computerSystem.HostName
+                }
+                write-host "---- Collecting disks information on server ---> $sName"
+                $data = Get-disk-from-iLO -serverName $sName -iloSession $iloSession -iloName $iloName -interfaceType $interfaceType -mediaType $mediaType   
+                if ($data)
+                {
+                    $diskInventory += $data
+                }
+                else
+                {
+                    write-host -foreground Yellow "      ------ No $diskMessage disk found on $iloName ...."
+                }
+            
             }
-            write-host "---- Collecting disks information on server ---> $sName"
-            $data = Get-disk-from-iLO -serverName $sName -iloSession $iloSession -iloName $iloName -interfaceType $interfaceType -mediaType $mediaType   
-            if ($data)
+            catch
             {
-                $diskInventory += $data
-            }
-            else
-            {
-                write-host -foreground Yellow "      ------ No $diskMessage disk found on $iloName ...."
+                # add ilo to error list
+                write-host -ForegroundColor Yellow "Cannot connect to ilo $iloName... Logging information in $errorFile"
+                $iloName | out-file -FilePath $errorFile -Append
+        
             }
         }
 

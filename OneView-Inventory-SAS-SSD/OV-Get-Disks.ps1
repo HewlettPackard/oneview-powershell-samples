@@ -93,63 +93,75 @@ Function Get-disk-from-iLO (
     
 {
     $data = @()
-    $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
-    foreach ($sys in $systems.Members.'@odata.id' )
-    {
-        $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
-        $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
-        foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
+    try {
+        
+        $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
+        foreach ($sys in $systems.Members.'@odata.id' )
         {
-            $controller         = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $controllerOdataid
-            $ddOdataid          = $controller.links.PhysicalDrives.'@odata.id'
-            $diskDrives         = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $ddOdataid
-            foreach ($diskOdataid in $diskDrives.Members.'@odata.id')
+            $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+            $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
+            foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
             {
-                $pd                  = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
-                $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.InterfaceType -eq $interfaceType}  else {$true}
-                $mediaFilter         = if ($mediaType -ne 'All')        {$pd.mediaType -eq $mediaType}          else {$true}
-
-                if ($interfaceFilter -and $mediaFilter )
+                $controller         = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $controllerOdataid
+                $ddOdataid          = $controller.links.PhysicalDrives.'@odata.id'
+                $diskDrives         = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $ddOdataid
+                foreach ($diskOdataid in $diskDrives.Members.'@odata.id')
                 {
-                    $sn              = $pd.serialNumber
-                    $interface       = $pd.InterfaceType
-                    $media           = $pd.mediaType
-                    $model           = $pd.Model
-                    $fw              = $pd.firmwareversion.current.versionstring
-                    $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
-                    $ph              = $pd.PowerOnHours
-                    if ($sn)
-                    {
-                        $powerOnHours   = $ssdUsage = ""
-                        if ($media -eq 'SSD') 
-                        {
-                            $years = $months = $days = 0
-                            if ($ph)
-                            {
-                                # Calculate poweronHours
-                                $tp         = new-timespan -hours $ph 
-                                $days       = [int]($tp.days)
-                                $hours      = [int]($tp.hours)
-                                $years      = [math]::floor($days / 365)  
-                                $m          = $days % 365
-                                $months     = [math]::floor($m / 30)
-                                $days       = $m % 30
+                    $pd                  = Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $diskOdataid
+                    $interfaceFilter     = if ($interfaceType -ne 'All')    {$pd.InterfaceType -eq $interfaceType}  else {$true}
+                    $mediaFilter         = if ($mediaType -ne 'All')        {$pd.mediaType -eq $mediaType}          else {$true}
 
+                    if ($interfaceFilter -and $mediaFilter )
+                    {
+                        $sn              = $pd.serialNumber
+                        $interface       = $pd.InterfaceType
+                        $media           = $pd.mediaType
+                        $model           = $pd.Model
+                        $fw              = $pd.firmwareversion.current.versionstring
+                        $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
+                        $ph              = $pd.PowerOnHours
+                        if ($sn)
+                        {
+                            $powerOnHours   = $ssdUsage = ""
+                            if ($media -eq 'SSD') 
+                            {
+                                $years = $months = $days = 0
+                                if ($ph)
+                                {
+                                    # Calculate poweronHours
+                                    $tp         = new-timespan -hours $ph 
+                                    $days       = [int]($tp.days)
+                                    $hours      = [int]($tp.hours)
+                                    $years      = [math]::floor($days / 365)  
+                                    $m          = $days % 365
+                                    $months     = [math]::floor($m / 30)
+                                    $days       = $m % 30
+
+                                }
+
+                                $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                                $ssdUsage       = "$ssdPercentUsage%"
                             }
 
-                            $powerOnHours   = "$years years-$months months-$days days-$hours hours"
-                            $ssdUsage       = "$ssdPercentUsage%"
+                            $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
+                    
                         }
 
-                        $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
-                   
                     }
-
                 }
-            }
 
+            }
         }
+
     }
+    catch
+    {
+        # add server to error list
+        write-host -ForegroundColor Yellow "Cannot connect to server $serverName... Logging information in $errorFile"
+        $serverName | out-file -FilePath $errorFile -Append
+
+    }
+
     return $data
 }
 
@@ -175,6 +187,7 @@ $connectionName = $connection.Name
 
 $outFile        = $connectionName + "_" + $date + "_disk_Inventory.csv"
 $d3940outFile   = $connectionName + "_" + "d3940_" + $date + "_disk_Inventory.csv"
+$errorFile      = $connectionName + $date + "_errors.txt"
 
 
 
