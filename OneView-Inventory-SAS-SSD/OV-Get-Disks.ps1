@@ -215,7 +215,7 @@ $diskMessage    = if ($interfaceType -ne 'All') { $interfaceType }     else {'SA
 $diskMessage   += if ($mediaType -ne 'All')     { "/ $mediaType "}     else {'/ SSD or HDD '}
 
 ### Get Server
-$Server_list = Get-HPOVServer
+$Server_list = Get-HPOVServer  | where mpModel -notlike '*ilo3*'
 
 foreach ($s in $Server_List)
 {
