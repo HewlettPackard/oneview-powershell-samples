@@ -206,7 +206,7 @@ if (test-path $CSVfile)
                 {
                     write-host -foreground Yellow "      ------ No $diskMessage disk found on $iloName ...."
                 }
-            
+                Disconnect-HPERedfish -Session $iloSession -DisableCertificateAuthentication
             }
             catch
             {
