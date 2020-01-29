@@ -98,7 +98,14 @@ Function Get-disk-from-iLO (
         $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
         foreach ($sys in $systems.Members.'@odata.id' )
         {
-            $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+            if ($sys[-1] -eq '/')
+            {
+                $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+            }
+            else 
+            {
+                $arrayControllerOdataid =   $sys + '/SmartStorage/ArrayControllers'
+            }
             $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
             foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
             {

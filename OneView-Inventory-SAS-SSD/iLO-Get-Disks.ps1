@@ -23,7 +23,15 @@ Function Get-disk (
     $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
     foreach ($sys in $systems.Members.'@odata.id' )
     {
-        $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+        if ($sys[-1] -eq '/')
+        {
+            $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+        }
+        else 
+        {
+            $arrayControllerOdataid =   $sys + '/SmartStorage/ArrayControllers'
+        }
+        
         $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
         foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
         {
@@ -94,7 +102,14 @@ Function Get-disk-from-iLO (
     $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
     foreach ($sys in $systems.Members.'@odata.id' )
     {
-        $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+        if ($sys[-1] -eq '/')
+        {
+            $arrayControllerOdataid =   $sys + 'SmartStorage/ArrayControllers'
+        }
+        else 
+        {
+            $arrayControllerOdataid =   $sys + '/SmartStorage/ArrayControllers'
+        }
         $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
         foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
         {
@@ -184,11 +199,12 @@ if (test-path $CSVfile)
             $securePassword = $ilo.password | ConvertTo-SecureString -AsPlainText -Force
             $cred           = New-Object System.Management.Automation.PSCredential  -ArgumentList $userName, $securePassword
 
-            try 
-            {
+
                 ## Connect to iLO
                 $iloSession     = Connect-HPERedfish -Address $iloName -Cred $cred -DisableCertificateAuthentication
 
+            try 
+            {
                 ## Get server name
                 $systems= Get-HPERedfishDataRaw  -session $iloSession -DisableCertificateAuthentication  -odataid '/redfish/v1/Systems'                                                                                                     
                 foreach ($sysOdataid in $systems.Members.'@odata.id' )

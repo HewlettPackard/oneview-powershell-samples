@@ -14,6 +14,7 @@ If the script cannot create an iLO session, it will record its IP address in a l
    * Login to the ILO using https or ssh
    * if you are using OneView, from the GUI, select the server and connect to the iLO console ( This is how the script is doing : it creates a SSO session)
    * In the last resort reset the iLO 
+   * check Endpoint of storageControllers
 
 ## How to get Support
 Simple scripts or tools posted on github are provided AS-IS and support is absed on best effort provided by the author. If you encunter problems with the script, please submit an issue 
