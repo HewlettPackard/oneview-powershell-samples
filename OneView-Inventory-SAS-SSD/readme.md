@@ -11,6 +11,10 @@ Administrators want to get an inventory of SAS SSD drives in response to the cri
    * Works for D3940 if using OneView
    * Also collect PowerOnHours and SSDUtilization
 
+## New features
+   * Jan 2020: Fix Redfish endpoint for Gen9-Gen10 servers
+   * Feb 2020: Add server Serial Number and Model
+
 ## How to get Support
 Simple scripts or tools posted on github are provided AS-IS and support is absed on best effort provided by the author. If you encunter problems with the script, please submit an issue 
 
