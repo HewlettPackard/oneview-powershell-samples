@@ -60,10 +60,10 @@ iloName,userName,password
 ```
 
 ```
-    # Get inventory for All disks ( default)
+    # Get inventory ONLY on Gen10 servers
     .\iLO-Get-Controller-FW-RAID.ps1 -CSVfile ilo.csv
 
-        # Get inventory on ALL servers
+    # Get inventory on ALL servers
     .\iLO-Get-Controller-FW-RAID.ps1 -CSVfile ilo.csv -All:$True
 
 ```
