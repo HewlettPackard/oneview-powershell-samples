@@ -18,7 +18,7 @@
 #
 #   VERSION 4.0
 #
-# (C) Copyright 2013-2019 Hewlett Packard Enterprise Development LP 
+# (C) Copyright 2013-2020 Hewlett Packard Enterprise Development LP
 ##############################################################################
 <#
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -41,7 +41,7 @@ THE SOFTWARE.
 #>
 ##############################################################################
 $ApplianceHostname = "appliance.lab.local"
-if (-not (Get-Module HPOneview.420)) 
+if (-not (Get-Module HPOneview.420))
 {
 
     Import-Module HPOneView.420
@@ -79,7 +79,7 @@ Get-HPOVServer -ServerHardwareType $SY480Gen10SHT -NoProfile | out-Host
 
 $TemplateName        = "Hypervisor Cluster Node Template v1"
 $TemplateDescription = "Corp standard hypervisor cluster node, version 1.0"
-$eg                  = Get-HPOVEnclosureGroup -Name "DCS Synergy Default EG" -ErrorAction Stop 
+$eg                  = Get-HPOVEnclosureGroup -Name "DCS Synergy Default EG" -ErrorAction Stop
 $Baseline            = Get-HPOVBaseline -File SPP_2017_10_20171215_for_HPE_Synergy_Z7550-96455.iso
 $con1                = Get-HPOVNetwork -Name "Management Network (VLAN1)" -ErrorAction Stop | New-HPOVServerProfileConnection -ConnectionID 1 -Name 'Management Network (VLAN1) Connection 1' -Bootable -Priority Primary
 $con2                = Get-HPOVNetwork -Name "Management Network (VLAN1)" -ErrorAction Stop | New-HPOVServerProfileConnection -ConnectionID 2 -Name 'Management Network (VLAN1) Connection 2'
@@ -120,7 +120,7 @@ pause
 # Create Server Profile from Server Profile Template, searching for a SY480 Gen10 server with at least 4 CPU and 512GB of RAM
 Get-HPOVServer -ServerHardwareType $SY480Gen10SHT -NoProfile -ErrorAction Stop | ? { ($_.processorCount * $_.processorCoreCount) -ge 4 -and $_.memoryMb -ge (512 * 1024) } | Select -First 2 -OutVariable svr | out-Host
 
-pause 
+pause
 
 # Make sure servers are powered off
 $svr | Stop-HPOVServer -Confirm:$false | Wait-HPOVTaskComplete | out-Host

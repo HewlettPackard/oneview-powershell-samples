@@ -1,4 +1,4 @@
- # Copyright 2018 Hewlett Packard Enterprise Development LP
+ # Copyright 2020 Hewlett Packard Enterprise Development LP
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -81,13 +81,13 @@ $OSDeploymentAttributes = Get-HPOVOSDeploymentPlanAttribute -InputObject $OSDepl
 ($OSDeploymentAttributes | Where-Object name -eq "Password").value = [Runtime.InteropServices.Marshal]::PtrToStringAuto([Runtime.InteropServices.Marshal]::SecureStringToBSTR($Password))
 
 $ParamHash = @{
-                
+
     Name                       = $ServerProfileName;
     AssignmentType             = "Server";
     Server                     = $Server;
     ServerProfileTemplate      = $ServerProfileTemplate;
     OSDeploymentPlanAttributes = $OSDeploymentAttributes
-    
-}            
+
+}
 
 $Results = New-HPOVServerProfile @ParamHash

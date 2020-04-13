@@ -1,4 +1,4 @@
- # Copyright 2018 Hewlett Packard Enterprise Development LP
+ # Copyright 2020 Hewlett Packard Enterprise Development LP
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -11,11 +11,11 @@
  # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  # License for the specific language governing permissions and limitations
  # under the License.
- 
+
 # Specify the firmware update mode.  Allowed values:
-# FirmwareAndOSDrivers - Updates the firmware and OS drivers without powering down the server hardware using Smart Update Tool. 
-# FirmwareOnly - Updates the firmware without powering down the server hardware using Smart Update Tool. 
-# FirmwareOnlyOfflineMode - Manages the firmware through HPE OneView. Selecting this option requires the server hardware to be powered down. 
+# FirmwareAndOSDrivers - Updates the firmware and OS drivers without powering down the server hardware using Smart Update Tool.
+# FirmwareOnly - Updates the firmware without powering down the server hardware using Smart Update Tool.
+# FirmwareOnlyOfflineMode - Manages the firmware through HPE OneView. Selecting this option requires the server hardware to be powered down.
 $FirmwareInstallationType = "FirmwareOnlyOfflineMode"
 
 $BaselineInstallationModes = @{
@@ -50,13 +50,13 @@ ForEach ($ServerProfile in $ServerProfiles)
     {
 
         $Server = Send-HPOVRequest -Uri $ServerProfile.serverHardwareUri
-        
+
     }
 
     $ServerProfile.firmware.manageFirmware = $true
     $ServerProfile.firmware.firmwareBaselineUri = $FirmwareBaseline.Uri
     $ServerProfile.firmware.firmwareInstallType = $FirmwareInstallationType
-    
+
     # Server power state should match the requested baseline installation mode, or the power state doesn't match (Off) the requested installation mode (On), and the installation mode is allowed (On), save the profile
     If ($Server.powerState -eq $BaselineInstallationModes[$FirmwareInstallationType] -or
         ($Server.powerState -ne $BaselineInstallationModes[$FirmwareInstallationType] -and $BaselineInstallationModes[$FirmwareInstallationType] -eq "On"))
@@ -75,14 +75,14 @@ ForEach ($ServerProfile in $ServerProfiles)
     # If server power needs to be off, then a statement to change the power state of the server (Set-HPOVServerPower) to Off could be used.
     else
     {
-    
+
         # Write error that server power state is On and needs to be powered off
         Write-Error ("The requested baseline installation type '{0}' does not support the server power state '{1}'.  Server power state must be {2} for the baseline to be deployed." -f $Server.powerState, $FirmwareInstallationType, $BaselineInstallationModes[$FirmwareInstallationType])
 
     }
 
     $s++
-    
+
 }
 
 Write-Progress -Activity ("Update server {0}" -f $FirmwareInstallationType) -Completed

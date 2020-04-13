@@ -1,14 +1,14 @@
 ##############################################################################
 # CreateServerProfilesFromTemplatesFromServerCollection.ps1
 #
-# Example script to demonstrate finding the number of requested BL or SY servers, 
+# Example script to demonstrate finding the number of requested BL or SY servers,
 # ensuring they are uniquely located to spread the cluster nodes across multiple
 # enclosures/frames.  Then, create a server profile for each available server
 # resource.
 #
 #   VERSION 1.0
 #
-# (C) Copyright 2013-2019 Hewlett Packard Enterprise Development LP 
+# (C) Copyright 2013-2020 Hewlett Packard Enterprise Development LP
 ##############################################################################
 <#
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -32,7 +32,7 @@ THE SOFTWARE.
 ##############################################################################
 
 $ApplianceHostname = "appliance.lab.local"
-if (-not (get-module HPOneview.420)) 
+if (-not (get-module HPOneview.420))
 {
 
     Import-Module HPOneView.420
@@ -125,7 +125,7 @@ Do
 
 # Final list of servers to deploy
 # C:\> $ServersToDeploy
-# 
+#
 # Name         ServerName           Status  Power Serial Number Model       ROM                  iLO       Server Profile
 # ----         ----------           ------  ----- ------------- -----       ---                  ---       --------------
 # Encl1, bay 5 Server-5.domain.com  Warning Off   SGH100X8RN    BL460c Gen8 I31 v1.30 09/30/2011 iLO4 2.55 No Profile
@@ -137,7 +137,7 @@ Do
 
 # Updated list of available servers
 # C:\> $AvailableServers
-# 
+#
 # Name         ServerName           Status  Power Serial Number Model       ROM                  iLO       Server Profile
 # ----         ----------           ------  ----- ------------- -----       ---                  ---       --------------
 # Encl1, bay 8 Server-8.domain.com  Warning Off   SGH103X8RN    BL460c Gen8 I31 v1.30 09/30/2011 iLO4 2.55 No Profile
@@ -149,7 +149,7 @@ Do
 $ServersToDeploy | Stop-HPOVServer -Confirm:$false | Wait-HPOVTaskComplete | out-Host
 
 # Create the number of Servers from the $svr collection
-For ($s = 1; $s -le $ServersToDeploy.count; $s++) 
+For ($s = 1; $s -le $ServersToDeploy.count; $s++)
 {
 
     New-HPOVServerProfile -Name "Prod-HypClusNode-0$s" -Assignment Server -Server $ServersToDeploy[($s - 1)] -ServerProfileTemplate $ServerProfileTemplate -Async

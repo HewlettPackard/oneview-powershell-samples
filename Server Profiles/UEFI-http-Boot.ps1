@@ -1,4 +1,4 @@
- # Copyright 2018 Hewlett Packard Enterprise Development LP
+ # Copyright 2020 Hewlett Packard Enterprise Development LP
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -11,11 +11,12 @@
  # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  # License for the specific language governing permissions and limitations
  # under the License.
- 
+
 # Specify the firmware update mode.  Allowed values:
-# FirmwareAndOSDrivers - Updates the firmware and OS drivers without powering down the server hardware using Smart Update Tool. 
-# FirmwareOnly - Updates the firmware without powering down the server hardware using Smart Update Tool. 
-# FirmwareOnlyOfflineMode - Manages the firmware through HPE OneView. Selecting this option requires the server hardware to be powered down. 
+# FirmwareAndOSDrivers - Updates the firmware and OS drivers without powering down the server hardware using Smart Update Tool.
+# FirmwareOnly - Updates the firmware without powering down the server hardware using Smart Update Tool.
+# FirmwareOnlyOfflineMode - Manages the firmware through HPE OneView. Selecting this option requires the server hardware to be powered down.
+
 # -------------- Attributes for ServerProfileTemplate "UEFI Boot Template"
 $name                       = "UEFI Boot Template"
 $shtName                    = "SY 480 Gen10 1"

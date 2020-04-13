@@ -1,4 +1,4 @@
- # Copyright 2018 Hewlett Packard Enterprise Development LP
+ # Copyright 2020 Hewlett Packard Enterprise Development LP
  #
  # Licensed under the Apache License, Version 2.0 (the "License"); you may
  # not use this file except in compliance with the License. You may obtain
@@ -11,7 +11,7 @@
  # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  # License for the specific language governing permissions and limitations
  # under the License.
- 
+
 # Use Case:
 # To update firmware on Synergy compute modules, you usually update profile template with a new SPP baseline.
 # Then apply modified template to profiles
@@ -33,12 +33,12 @@ if ($NULL -ne $thisTemplate)
             $thisTemplate.firmware.firmwareBaselineUri = $baselineUri
             Send-HPOVRequest -uri $thisTemplate.uri -body $thisTemplate -method PUT
         }
-        else 
+        else
         {
-            -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."   
+            -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."
         }
 }
-else 
+else
 {
-    write-host -ForegroundColor YELLOW "Template --> $template does not exist. Skip modifying it..."    
+    write-host -ForegroundColor YELLOW "Template --> $template does not exist. Skip modifying it..."
 }
