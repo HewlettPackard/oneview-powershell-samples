@@ -36,10 +36,36 @@ Function D3940-get-disk(
             $sn             = $pd.serialNumber
             $model          = $pd.model
             $fw             = $pd.firmwareVersion
+            $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
+            $ph              = $pd.PowerOnHours
             if ($sn)
             {
-                $data      += "$name,$interface,$media,$model,$sn,$fw"
+                $powerOnHours   = $ssdUsage = ""
+                if ($media -eq 'SSD') 
+                {
+                    $years = $months = $days = 0
+                    if ($ph)
+                    {
+                        # Calculate poweronHours
+                        $tp         = new-timespan -hours $ph 
+                        $days       = [int]($tp.days)
+                        $hours      = [int]($tp.hours)
+                        $years      = [math]::floor($days / 365)  
+                        $m          = $days % 365
+                        $months     = [math]::floor($m / 30)
+                        $days       = $m % 30
+
+                    }
+
+                    $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                    $ssdUsage       = "$ssdPercentUsage%"
+                }
+
+                $data   += "$name,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
+        
             }
+
+
 
         }      
     }
@@ -70,9 +96,31 @@ Function Gen10-get-disk (
             $interface  = $pd.InterfaceType
             $model      = $pd.Model
             $fw         = $pd.firmwareversion.current.versionstring
+            $ssdPercentUsage = [int]$pd.SSDEnduranceUtilizationPercentage
+            $ph              = $pd.PowerOnHours
             if ($sn)
             {
-                $data   += "$name,$interface,$model,$sn,$fw" 
+                $powerOnHours   = $ssdUsage = ""
+                if ($media -eq 'SSD') 
+                {
+                    $years = $months = $days = 0
+                    if ($ph)
+                    {
+                        # Calculate poweronHours
+                        $tp         = new-timespan -hours $ph 
+                        $days       = [int]($tp.days)
+                        $hours      = [int]($tp.hours)
+                        $years      = [math]::floor($days / 365)  
+                        $m          = $days % 365
+                        $months     = [math]::floor($m / 30)
+                        $days       = $m % 30
+                    }
+
+                    $powerOnHours   = "$years years-$months months-$days days-$hours hours"
+                    $ssdUsage       = "$ssdPercentUsage%"
+
+                }
+                $data   += "$name,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
             }
         }
     }
@@ -106,6 +154,7 @@ Function Get-disk-from-iLO (
             {
                 $arrayControllerOdataid =   $sys + '/SmartStorage/ArrayControllers'
             }
+
             $arrayControllers       =   Get-HPERedfishDataRaw -session $iloSession -DisableCertificateAuthentication  -odataid $arrayControllerOdataid
             foreach ($controllerOdataid in $arrayControllers.Members.'@odata.id')
             {
@@ -150,7 +199,7 @@ Function Get-disk-from-iLO (
                                 $ssdUsage       = "$ssdPercentUsage%"
                             }
 
-                            $data   += "$serverName,$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
+                            $data   += "$interface,$media,$model,$sn,$fw,$ssdUsage,$powerOnHours"
                     
                         }
 
@@ -159,7 +208,7 @@ Function Get-disk-from-iLO (
 
             }
         }
-        #Disconnect-HPERedfish -Session $iloSession -DisableCertificateAuthentication
+
     }
     catch
     {
@@ -176,9 +225,8 @@ Function Get-disk-from-iLO (
 
 $date           = (get-date).toString('MM_dd_yyyy') 
 
-
-$diskInventory  = @("Server,Interface,MediaType,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
-$d3940Inventory = @("diskLocation,Interface,MediaType,Model,SerialNumber,firmware")
+$diskInventory  = @("Server,serverModel,serverSN,Interface,MediaType,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
+$d3940Inventory = @("diskLocation,Interface,MediaType,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
 
 
 ### Connect to OneView
@@ -242,6 +290,11 @@ foreach ($s in $Server_List)
     $data           = @()
     $sName          = $s.Name 
     $sName_noquote  = $sName
+    $sModel         = $s.Model
+    $sSN            = $s.SerialNumber
+
+    $sName          = $sName -replace ", " , '-'
+    $serverPrefix   = "$sName,$sModel,$sSN"
 
     if ($sName -like  "*$COMMA*")
     {
@@ -256,8 +309,8 @@ foreach ($s in $Server_List)
 
     if ($data)
     {
-
-        $diskInventory += $data
+        $data           = $data | % {"$serverPrefix,$_"}
+        $diskInventory += $data 
     }
     else
     {

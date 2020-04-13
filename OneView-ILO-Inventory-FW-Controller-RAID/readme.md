@@ -1,19 +1,17 @@
-# Inventory of local disks ( SAS-SATA / SDD-HDD) PowerShell script
+# Inventory of FW-Controller and RAID level PowerShell script
 
 
 ## Scenario
-Administrators want to get an inventory of SAS SSD drives in response to the critical advisory for upgrading firmware on those drives: https://support.hpe.com/hpsc/doc/public/display?docId=emr_na-a00092491en_us 
+Administrators want to get an inventory of Controller FW and RAID in response to the critical advisory for upgrading firmware: https://support.hpe.com/hpesc/public/docDisplay?docId=emr_na-a00097210en_us
 
 
 ## Notes
    * Works for both OneView and non-OneView environment(using iLO)
    * Works for Gen8/Gen9 and Gen10 servers - BL and DL
-   * Works for D3940 if using OneView
-   * Also collect PowerOnHours and SSDUtilization
+
 
 ## New features
-   * Jan 2020: Fix Redfish endpoint for Gen9-Gen10 servers
-   * Feb 2020: Add server Serial Number and Model
+   * Mar 2020: 1st release
 
 ## How to get Support
 Simple scripts or tools posted on github are provided AS-IS and support is absed on best effort provided by the author. If you encunter problems with the script, please submit an issue 
@@ -43,14 +41,11 @@ The script requires:
 ## To run in an OneView environment
 
 ```
-    # Get inventory for all disks ( default)
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password>
+    # Get inventory ONLY on Gen10 servers
+    .\OV-Get-Controller-FW-RAID.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password>
 
-    # Get inventory for SAS-SSD disks 
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SAS -mediaType SSD
-    
-    # Get inventory for SATA-SSD disks 
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SATA -mediaType SSD
+    # Get inventory on ALL servers
+    .\OV-Get-Controller-FW-RAID.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -All:$True
 
 ```
 
@@ -65,14 +60,11 @@ iloName,userName,password
 ```
 
 ```
-    # Get inventory for All disks ( default)
-    .\iLO-Get-Disks.ps1 -CSVfile ilo.csv
+    # Get inventory ONLY on Gen10 servers
+    .\iLO-Get-Controller-FW-RAID.ps1 -CSVfile ilo.csv
 
-    # Get inventory for SAS-SSD disks 
-    .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SAS -mediaType SSD
-
-    # Get inventory for SATA-SSD disks 
-    .\iLO-Get-Disks.ps1 -CSVfile ilo.csv -interfaceType SATA -mediaType SSD
+    # Get inventory on ALL servers
+    .\iLO-Get-Controller-FW-RAID.ps1 -CSVfile ilo.csv -All:$True
 
 ```
     
