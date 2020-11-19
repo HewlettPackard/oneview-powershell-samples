@@ -1,6 +1,6 @@
 ### Overview
 
-The PowerShell script `Rename-LANnetworks` renames Ethernet connections on a Windows OS server using names defined in HP OneView Ethernet networks.
+The PowerShell script `Rename-LANnetworks` renames Ethernet connections on a Windows OS server using names defined in HPE OneView Ethernet networks.
 
 #### Use case
 
@@ -10,11 +10,11 @@ If your Blade server is managed by OneView, you may have already create networks
 
 #### Pre-requisites
 
-* HP OneView appliance v1.20 or above
-* Enclosure managed by HP OneView
-* At least the Server Administrator role to access HP OneView
+* HPE OneView appliance v1.20 or above
+* Enclosure managed by HPE OneView
+* At least the Server Administrator role to access HPE OneView
 * PowerShell v3.0 or greater
-* [HP OneView PowerShell 1.20 Library] (https://github.com/HewlettPackard/POSH-HPOneView/releases) installed
+* [HPE OneView PowerShell 1.20 or newer Library](https://github.com/HewlettPackard/POSH-HPEOneView/releases) installed
 
 #### Description
 
@@ -36,5 +36,3 @@ The script is executed locally on the Blade server after the OS installation com
 Log in to the Blade Server after the installation. Execute the script as follow:
 
 <pre>.\Rename-LANnetworks.ps1 -OVApplianceIP 10.254.1.20  OVAdminName this_user  OVAdminPassword this_password  OneViewModule HPOneView.120</pre>
-
-<img src="https://raw.githubusercontent.com/wiki/HewlettPackard/POSH-HPOneView/Examples/icon_download.png"/>[Download Script Source] (https://github.com/HewlettPackard/POSH-HPOneView/wiki/Examples/Rename-LANnetworks.zip)
