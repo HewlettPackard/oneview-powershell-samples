@@ -6,7 +6,7 @@
 #
 # Used with HPE OneView 5.00 PowerShell library
 #
-#   VERSION 1.0
+#   VERSION 1.1
 #
 # (C) Copyright 2013-2020 Hewlett Packard Enterprise Development LP
 ##############################################################################
@@ -46,7 +46,7 @@ class sasLogicalJBOD
     [bool]$persistent = $true;
     [string]$sasLogicalJBODUri = $null;
 
-    sasLogicalJBODs ([object]$ExistingLJBOD, [int]$NextLogicalID, [string]$DeviceSlot, [Bool]$IsPersistent)
+    sasLogicalJBOD ([object]$ExistingLJBOD, [int]$NextLogicalID, [string]$DeviceSlot, [Bool]$IsPersistent)
     {
 
         # This is used to put the driveTechnology property to the correct value later in the script
