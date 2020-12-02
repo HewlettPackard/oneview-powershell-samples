@@ -35,7 +35,7 @@ if ($NULL -ne $thisTemplate)
         }
         else
         {
-            -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."
+            write-host -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."
         }
 }
 else
