@@ -60,7 +60,7 @@ if ($NULL -ne $thisTemplate)
         else
         {
 
-            -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."
+            write-host -ForegroundColor YELLOW "New baseline --> $newBaseline does not exist. Skip modifying template..."
 
         }
 }
@@ -72,7 +72,6 @@ else
 
 }
 
-
 # Get the list of servers profiles that are no longer compliant, and asynchronously update them
 
 $tasks = @()
@@ -82,3 +81,5 @@ ForEach ($Server in (Get-OVServerProfile -NotCompliant))
     $tasks += Update-OVServerProfile -InputObject $Server -Async
 
 }
+
+$tasks
