@@ -57,7 +57,7 @@ Requirements:
 # VARIABLES
 
 # Location of the CPLD components, you can download it from https://support.hpe.com/hpesc/public/swd/detail?swItemId=MTX-82b53f00662944558a0a7dc191
-$CPDL_Location = "C:\\iLO5\\CPLD_SY480_Gen10_v0F0F.fwpkg" 
+$CPDL_Location = "C:\\HPE\\CPLD_SY480_Gen10_v0F0F.fwpkg" 
 
 
 # HPE OneView 
