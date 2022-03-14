@@ -127,7 +127,7 @@ if (! $impactedservers) {
 }
 else {
     write-host "$($impactedservers.count) servers impacted by the CPLD issue!"
-    $impactedservers
+    $impactedservers | Out-Host
     write-host "Starting the CPLD update procedure..."
 }
 
