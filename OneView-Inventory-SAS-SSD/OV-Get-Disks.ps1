@@ -65,9 +65,8 @@ Function D3940-get-disk(
         
             }
 
+        }
 
-
-        }      
     }
 
     return $data
@@ -225,7 +224,7 @@ Function Get-disk-from-iLO (
 
 $date           = (get-date).toString('MM_dd_yyyy') 
 
-$diskInventory  = @("Server,serverModel,serverSN,Interface,MediaType,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
+$diskInventory  = @("Server,serverModel,serverSN,Interface,MediaType,ModelNumber,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
 $d3940Inventory = @("diskLocation,Interface,MediaType,Model,SerialNumber,firmware,ssdEnduranceUtilizationPercentage,powerOnHours")
 
 
