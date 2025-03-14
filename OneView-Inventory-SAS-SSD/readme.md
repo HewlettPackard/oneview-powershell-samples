@@ -14,6 +14,7 @@ Administrators want to get an inventory of SAS SSD drives in response to the cri
 ## New features
    * Jan 2020: Fix Redfish endpoint for Gen9-Gen10 servers
    * Feb 2020: Add server Serial Number and Model
+   * Mar 2025: Updated OV-Get-Disks.ps1 to enhance CSV columns and updated core HPE OneView Cmdlet verbs from -HPOV to -OV.
 
 ## How to get Support
 Simple scripts or tools posted on github are provided AS-IS and support is absed on best effort provided by the author. If you encunter problems with the script, please submit an issue 
@@ -32,25 +33,25 @@ The script requires:
     # You will need HPERedfishCmdlets for both OneView and non-OneView environment 
     install-Module  HPERedfishcmdlets  -scope currentuser
     
-    # For OneView 4.20
-    install-module HPOneView.420  -scope currentuser
-
-    # For OneView 5.0
-    install-module HPOneView.500  -scope currentuser
-
+    # Install HPE OneView PowerShell library
+    install-module HPEOneView.920  -scope currentuser
 ```
 
 ## To run in an OneView environment
 
 ```
+
+    # Get OV credentials from user
+    $creds = Get-Credential
+
     # Get inventory for all disks ( default)
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password>
+    .\OV-Get-Disks.ps1 -hostname <OV-name> -creds $creds
 
     # Get inventory for SAS-SSD disks 
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SAS -mediaType SSD
+    .\OV-Get-Disks.ps1 -hostname <OV-name> -creds $creds -interfaceType SAS -mediaType SSD
     
     # Get inventory for SATA-SSD disks 
-    .\OV-Get-Disks.ps1 -hostname <OV-name> -username <OV-admin> -password <OV-password> -interfaceType SATA -mediaType SSD
+    .\OV-Get-Disks.ps1 -hostname <OV-name> -creds $creds -interfaceType SATA -mediaType SSD
 
 ```
 

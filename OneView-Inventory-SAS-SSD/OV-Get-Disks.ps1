@@ -1,6 +1,7 @@
 # ------------------ Parameters
 Param (                    
         [string]$hostName                  = "", 
+        [pscredential]$cred                = $null,
         [string]$userName                  = "", 
         [string]$password                  = "",
         [string]$authLoginDomain           = "local",
@@ -85,7 +86,7 @@ Function Gen10-get-disk (
 
     $data = @()
     $lStorageUri   = $server.subResources.LocalStorage.uri
-    $lStorage      = send-HPOVRequest -uri $lStorageUri
+    $lStorage      = send-OVRequest -uri $lStorageUri
 
     foreach ($pd in $lStorage.data.PhysicalDrives)
     {
@@ -229,12 +230,16 @@ $d3940Inventory = @("diskLocation,Interface,MediaType,Model,SerialNumber,firmwar
 
 
 ### Connect to OneView
-$securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
-$cred           = New-Object System.Management.Automation.PSCredential  -ArgumentList $userName, $securePassword
 
+if ($cred -eq $null)
+{
+    $userName       = $userName
+    $securePassword = $password | ConvertTo-SecureString -AsPlainText -Force
+    $cred           = New-Object System.Management.Automation.PSCredential  -ArgumentList $userName, $securePassword
+}
 
 write-host -ForegroundColor Cyan "---- Connecting to OneView --> $hostName"
-$connection     = Connect-HPOVMgmt -Hostname $hostName -loginAcknowledge:$true -AuthLoginDomain $authLoginDomain -Credential $cred
+$connection     = Connect-OVMgmt -Hostname $hostName -loginAcknowledge:$true -AuthLoginDomain $authLoginDomain -Credential $cred
 $connectionName = $connection.Name 
 
 
@@ -249,7 +254,7 @@ $errorFile      = $connectionName + $date + "_errors.txt"
 
 if ($connection.ApplianceType -eq 'Composer')
 {
-    $d3940_list   = Get-HPOVDriveEnclosure
+    $d3940_list   = Get-OVDriveEnclosure
     if ($d3940_list) 
     {
         foreach ($d3940 in $d3940_list)
@@ -282,7 +287,7 @@ $diskMessage    = if ($interfaceType -ne 'All') { $interfaceType }     else {'SA
 $diskMessage   += if ($mediaType -ne 'All')     { "/ $mediaType "}     else {'/ SSD or HDD '}
 
 ### Get Server
-$Server_list = Get-HPOVServer  | where mpModel -notlike '*ilo3*'
+$Server_list = Get-OVServer  | where mpModel -notlike '*ilo3*'
 
 foreach ($s in $Server_List)
 {
@@ -301,7 +306,7 @@ foreach ($s in $Server_List)
     }
 
     write-host "---- Collecting disks information on server ---> $sName_noquote"
-    $iloSession = $s | get-HPOVilosso -iLORestSession
+    $iloSession = $s | get-OVilosso -iLORestSession
     $ilosession.rootUri = $ilosession.rootUri -replace 'rest','redfish'
 
     $data = Get-disk-from-iLO -serverName $sName -iloSession $iloSession -interfaceType $interfaceType -mediaType $mediaType   
@@ -324,4 +329,4 @@ write-host -foreground CYAN "Disk Inventory on server complete --> file: $outFil
 
 
 
-Disconnect-HPOVMgmt
+Disconnect-OVMgmt
